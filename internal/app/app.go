@@ -442,6 +442,21 @@ func New(cfg *config.Config, log *logger.Logger) (*App, error) {
 
 }
 
+// mcpHandlerWithAuth 在鉴权通过后转发到 MCP 处理；若配置了 auth_header 则校验请求头，否则直接放行
+func (a *App) mcpHandlerWithAuth(w http.ResponseWriter, r *http.Request) {
+	cfg := a.config.MCP
+	if cfg.AuthHeader != "" {
+		if r.Header.Get(cfg.AuthHeader) != cfg.AuthHeaderValue {
+			a.logger.Logger.Debug("MCP 鉴权失败：header 缺失或值不匹配", zap.String("header", cfg.AuthHeader))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error":"unauthorized"}`))
+			return
+		}
+	}
+	a.mcpServer.HandleHTTP(w, r)
+}
+
 // Run 启动应用
 func (a *App) Run() error {
 	// 启动MCP服务器（如果启用）
@@ -451,7 +466,7 @@ func (a *App) Run() error {
 			a.logger.Info("启动MCP服务器", zap.String("address", mcpAddr))
 
 			mux := http.NewServeMux()
-			mux.HandleFunc("/mcp", a.mcpServer.HandleHTTP)
+			mux.HandleFunc("/mcp", a.mcpHandlerWithAuth)
 
 			if err := http.ListenAndServe(mcpAddr, mux); err != nil {
 				a.logger.Error("MCP服务器启动失败", zap.Error(err))

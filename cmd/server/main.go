@@ -19,6 +19,15 @@ func main() {
 		return
 	}
 
+	// MCP 启用且 auth_header_value 为空时，自动生成随机密钥并写回配置
+	if err := config.EnsureMCPAuth(*configPath, cfg); err != nil {
+		fmt.Printf("MCP 鉴权配置失败: %v\n", err)
+		return
+	}
+	if cfg.MCP.Enabled {
+		config.PrintMCPConfigJSON(cfg.MCP)
+	}
+
 	// 初始化日志
 	log := logger.New(cfg.Log.Level, cfg.Log.Output)
 

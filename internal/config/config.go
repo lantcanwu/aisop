@@ -3,6 +3,8 @@ package config
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -74,9 +76,11 @@ type LogConfig struct {
 }
 
 type MCPConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Host    string `yaml:"host"`
-	Port    int    `yaml:"port"`
+	Enabled         bool   `yaml:"enabled"`
+	Host            string `yaml:"host"`
+	Port            int    `yaml:"port"`
+	AuthHeader      string `yaml:"auth_header,omitempty"`      // 鉴权 header 名，留空表示不鉴权
+	AuthHeaderValue string `yaml:"auth_header_value,omitempty"` // 鉴权 header 值，需与请求中该 header 一致
 }
 
 type OpenAIConfig struct {
@@ -381,6 +385,124 @@ func PrintGeneratedPasswordWarning(password string, persisted bool, persistErr s
 	fmt.Println("Please store it securely and change it in config.yaml as soon as possible.")
 	fmt.Println("警告：持有此密码的人将拥有对 CyberStrikeAI 的完全控制权限。")
 	fmt.Println("请妥善保管，并尽快在 config.yaml 中修改 auth.password！")
+	fmt.Println("----------------------------------------------------------------")
+}
+
+// generateRandomToken 生成用于 MCP 鉴权的随机字符串（64 位十六进制）
+func generateRandomToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// persistMCPAuth 将 MCP 的 auth_header / auth_header_value 写回配置文件
+func persistMCPAuth(path string, mcp *MCPConfig) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(string(data), "\n")
+	inMcpBlock := false
+	mcpIndent := -1
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !inMcpBlock {
+			if strings.HasPrefix(trimmed, "mcp:") {
+				inMcpBlock = true
+				mcpIndent = len(line) - len(strings.TrimLeft(line, " "))
+			}
+			continue
+		}
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
+		if leadingSpaces <= mcpIndent {
+			inMcpBlock = false
+			mcpIndent = -1
+			if strings.HasPrefix(trimmed, "mcp:") {
+				inMcpBlock = true
+				mcpIndent = leadingSpaces
+			}
+			continue
+		}
+
+		prefix := line[:leadingSpaces]
+		rest := strings.TrimSpace(line[leadingSpaces:])
+		comment := ""
+		if idx := strings.Index(line, "#"); idx >= 0 {
+			comment = strings.TrimRight(line[idx:], " ")
+		}
+		withComment := ""
+		if comment != "" {
+			if !strings.HasPrefix(comment, " ") {
+				withComment = " "
+			}
+			withComment += comment
+		}
+
+		if strings.HasPrefix(rest, "auth_header_value:") {
+			lines[i] = fmt.Sprintf("%sauth_header_value: %q%s", prefix, mcp.AuthHeaderValue, withComment)
+		} else if strings.HasPrefix(rest, "auth_header:") {
+			lines[i] = fmt.Sprintf("%sauth_header: %q%s", prefix, mcp.AuthHeader, withComment)
+		}
+	}
+
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
+}
+
+// EnsureMCPAuth 在 MCP 启用且 auth_header_value 为空时，自动生成随机密钥并写回配置
+func EnsureMCPAuth(path string, cfg *Config) error {
+	if !cfg.MCP.Enabled || strings.TrimSpace(cfg.MCP.AuthHeaderValue) != "" {
+		return nil
+	}
+	token, err := generateRandomToken()
+	if err != nil {
+		return fmt.Errorf("生成 MCP 鉴权密钥失败: %w", err)
+	}
+	cfg.MCP.AuthHeaderValue = token
+	if strings.TrimSpace(cfg.MCP.AuthHeader) == "" {
+		cfg.MCP.AuthHeader = "X-MCP-Token"
+	}
+	return persistMCPAuth(path, &cfg.MCP)
+}
+
+// PrintMCPConfigJSON 向终端输出 MCP 配置的 JSON，可直接复制到 Cursor / Claude Code 的 mcp 配置中使用
+func PrintMCPConfigJSON(mcp MCPConfig) {
+	if !mcp.Enabled {
+		return
+	}
+	hostForURL := strings.TrimSpace(mcp.Host)
+	if hostForURL == "" || hostForURL == "0.0.0.0" {
+		hostForURL = "localhost"
+	}
+	url := fmt.Sprintf("http://%s:%d/mcp", hostForURL, mcp.Port)
+	headers := map[string]string{}
+	if mcp.AuthHeader != "" {
+		headers[mcp.AuthHeader] = mcp.AuthHeaderValue
+	}
+	serverEntry := map[string]interface{}{
+		"url": url,
+	}
+	if len(headers) > 0 {
+		serverEntry["headers"] = headers
+	}
+	// Claude Code 需要 type: "http"
+	serverEntry["type"] = "http"
+	out := map[string]interface{}{
+		"mcpServers": map[string]interface{}{
+			"cyberstrike-ai": serverEntry,
+		},
+	}
+	b, _ := json.MarshalIndent(out, "", "  ")
+	fmt.Println("[CyberStrikeAI] MCP 配置（可复制到 Cursor / Claude Code 使用）：")
+	fmt.Println("  Cursor: 放入 ~/.cursor/mcp.json 的 mcpServers，或项目 .cursor/mcp.json")
+	fmt.Println("  Claude Code: 放入 .mcp.json 或 ~/.claude.json 的 mcpServers")
+	fmt.Println("----------------------------------------------------------------")
+	fmt.Println(string(b))
 	fmt.Println("----------------------------------------------------------------")
 }
 
