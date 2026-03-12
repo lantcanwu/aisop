@@ -1028,7 +1028,7 @@
     "title": "终端",
     "description": "在服务器上执行命令，便于运维与调试。命令在服务端执行，请勿执行敏感或破坏性操作。",
     "terminalTab": "终端 {{n}}",
-    "close": "关闭",
+    "close": "×",
     "newTerminal": "+"
   },
   "settingsSecurity": {
