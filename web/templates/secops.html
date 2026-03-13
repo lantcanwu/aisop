@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecOps AI - 安全运营</title>
+    <link rel="icon" type="image/png" href="/static/logo.png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .secops-container { padding: 20px; }
+        .secops-header { margin-bottom: 24px; }
+        .secops-header h2 { font-size: 24px; margin-bottom: 8px; }
+        .secops-header p { color: #666; }
+        
+        .secops-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
+        .secops-tab { 
+            padding: 8px 16px; 
+            cursor: pointer; 
+            border: none; 
+            background: none; 
+            font-size: 14px;
+            color: #666;
+            border-radius: 4px;
+        }
+        .secops-tab.active { 
+            background: #e3f2fd; 
+            color: #1976d2; 
+        }
+        
+        .secops-card { 
+            background: #fff; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-bottom: 16px;
+        }
+        .secops-card-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            margin-bottom: 16px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid #eee;
+        }
+        
+        .secops-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .secops-stat { 
+            background: #fff; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 20px; 
+            text-align: center;
+        }
+        .secops-stat-value { font-size: 32px; font-weight: bold; color: #1976d2; }
+        .secops-stat-label { color: #666; font-size: 14px; margin-top: 8px; }
+        
+        .secops-table { width: 100%; border-collapse: collapse; }
+        .secops-table th, .secops-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .secops-table th { background: #f5f5f5; font-weight: 600; }
+        .secops-table tr:hover { background: #fafafa; }
+        
+        .secops-badge { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: 500;
+        }
+        .secops-badge-critical { background: #ffebee; color: #c62828; }
+        .secops-badge-high { background: #fff3e0; color: #e65100; }
+        .secops-badge-medium { background: #fff8e1; color: #f57f17; }
+        .secops-badge-low { background: #e8f5e9; color: #2e7d32; }
+        
+        .secops-actions { display: flex; gap: 8px; }
+        .secops-btn { 
+            padding: 6px 12px; 
+            border: 1px solid #ddd; 
+            background: #fff; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 13px;
+        }
+        .secops-btn:hover { background: #f5f5f5; }
+        .secops-btn-primary { background: #1976d2; color: #fff; border-color: #1976d2; }
+        .secops-btn-primary:hover { background: #1565c0; }
+        
+        .secops-form-group { margin-bottom: 16px; }
+        .secops-form-group label { display: block; margin-bottom: 6px; font-weight: 500; }
+        .secops-form-group input, .secops-form-group select, .secops-form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;
+        }
+        
+        .secops-modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .secops-modal.active { display: flex; }
+        .secops-modal-content { background: #fff; border-radius: 8px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .secops-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .secops-modal-close { cursor: pointer; font-size: 24px; }
+        
+        .secops-chart { height: 300px; background: #fafafa; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="secops-container">
+        <div class="secops-header">
+            <h2>SecOps AI - 安全运营中心</h2>
+            <p>统一的安全运营协作平台</p>
+        </div>
+        
+        <div class="secops-stats">
+            <div class="secops-stat">
+                <div class="secops-stat-value" id="stat-total">0</div>
+                <div class="secops-stat-label">总事件数</div>
+            </div>
+            <div class="secops-stat">
+                <div class="secops-stat-value" id="stat-pending" style="color: #e65100;">0</div>
+                <div class="secops-stat-label">待处理</div>
+            </div>
+            <div class="secops-stat">
+                <div class="secops-stat-value" style="color: #c62828;" id="stat-critical">0</div>
+                <div class="secops-stat-label">严重事件</div>
+            </div>
+            <div class="secops-stat">
+                <div class="secops-stat-value" style="color: #2e7d32;" id="stat-resolved">0</div>
+                <div class="secops-stat-label">今日处置</div>
+            </div>
+        </div>
+        
+        <div class="secops-tabs">
+            <button class="secops-tab active" data-tab="events">安全事件</button>
+            <button class="secops-tab" data-tab="collectors">数据采集</button>
+            <button class="secops-tab" data-tab="tickets">工单管理</button>
+            <button class="secops-tab" data-tab="dashboard">态势感知</button>
+            <button class="secops-tab" data-tab="knowledge">知识库</button>
+        </div>
+        
+        <!-- 安全事件 Tab -->
+        <div class="secops-tab-content" id="tab-events">
+            <div class="secops-card">
+                <div class="secops-card-title">
+                    <span>安全事件列表</span>
+                    <button class="secops-btn secops-btn-primary" onclick="showEventModal()">+ 手动录入</button>
+                </div>
+                <table class="secops-table">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>标题</th>
+                            <th>来源</th>
+                            <th>严重程度</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table">
+                        <tr><td colspan="6" style="text-align: center; color: #999;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 数据采集 Tab -->
+        <div class="secops-tab-content" id="tab-collectors" style="display: none;">
+            <div class="secops-card">
+                <div class="secops-card-title">
+                    <span>采集器管理</span>
+                    <button class="secops-btn secops-btn-primary" onclick="showCollectorModal()">+ 添加采集器</button>
+                </div>
+                <table class="secops-table">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>调度</th>
+                            <th>状态</th>
+                            <th>最后运行</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="collectors-table">
+                        <tr><td colspan="6" style="text-align: center; color: #999;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="secops-card">
+                <div class="secops-card-title">
+                    <span>Webhook 端点</span>
+                    <button class="secops-btn secops-btn-primary" onclick="createWebhook()">+ 创建 Webhook</button>
+                </div>
+                <table class="secops-table">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>端点 URL</th>
+                            <th>事件类型</th>
+                            <th>接收事件数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="webhooks-table">
+                        <tr><td colspan="5" style="text-align: center; color: #999;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 工单管理 Tab -->
+        <div class="secops-tab-content" id="tab-tickets" style="display: none;">
+            <div class="secops-card">
+                <div class="secops-card-title">
+                    <span>工单列表</span>
+                    <button class="secops-btn secops-btn-primary" onclick="showTicketModal()">+ 创建工单</button>
+                </div>
+                <table class="secops-table">
+                    <thead>
+                        <tr>
+                            <th>工单 ID</th>
+                            <th>标题</th>
+                            <th>优先级</th>
+                            <th>状态</th>
+                            <th>负责人</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-table">
+                        <tr><td colspan="6" style="text-align: center; color: #999;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 态势感知 Tab -->
+        <div class="secops-tab-content" id="tab-dashboard" style="display: none;">
+            <div class="secops-card">
+                <div class="secops-card-title">攻击趋势 (近7天)</div>
+                <div class="secops-chart" id="trend-chart">图表加载中...</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="secops-card">
+                    <div class="secops-card-title">Top 攻击类型</div>
+                    <div id="attack-types">加载中...</div>
+                </div>
+                <div class="secops-card">
+                    <div class="secops-card-title">Top 受攻击资产</div>
+                    <div id="top-assets">加载中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 知识库 Tab -->
+        <div class="secops-tab-content" id="tab-knowledge" style="display: none;">
+            <div class="secops-card">
+                <div class="secops-card-title">安全知识问答</div>
+                <div class="secops-form-group">
+                    <input type="text" id="qa-input" placeholder="请输入问题，例如：如何防御 SQL 注入？">
+                </div>
+                <button class="secops-btn secops-btn-primary" onclick="askKnowledge()">提问</button>
+                <div id="qa-result" style="margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 4px; display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 事件 Modal -->
+    <div class="secops-modal" id="event-modal">
+        <div class="secops-modal-content">
+            <div class="secops-modal-header">
+                <h3>手动录入事件</h3>
+                <span class="secops-modal-close" onclick="closeModal('event-modal')">&times;</span>
+            </div>
+            <div class="secops-form-group">
+                <label>事件标题</label>
+                <input type="text" id="event-title" placeholder="输入事件标题">
+            </div>
+            <div class="secops-form-group">
+                <label>事件来源</label>
+                <select id="event-source">
+                    <option value="manual">手动录入</option>
+                    <option value="firewall">防火墙</option>
+                    <option value="edr">EDR</option>
+                    <option value="siem">SIEM</option>
+                    <option value="ids">IDS</option>
+                </select>
+            </div>
+            <div class="secops-form-group">
+                <label>严重程度</label>
+                <select id="event-severity">
+                    <option value="critical">严重</option>
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                    <option value="info">信息</option>
+                </select>
+            </div>
+            <div class="secops-form-group">
+                <label>描述</label>
+                <textarea id="event-description" rows="4" placeholder="输入事件描述"></textarea>
+            </div>
+            <button class="secops-btn secops-btn-primary" onclick="submitEvent()">提交</button>
+        </div>
+    </div>
+
+    <script src="/static/js/secops.js"></script>
+</body>
+</html>
