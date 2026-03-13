@@ -2,14 +2,81 @@
   <img src="web/static/logo.png" alt="CyberStrikeAI Logo" width="200">
 </div>
 
-# CyberStrikeAI
+# CyberStrikeAI + SecOps AI
 
 [中文](README_CN.md) | [English](README.md)
 
-CyberStrikeAI 是一款 **AI 原生安全测试平台**，基于 Go 构建，集成了 100+ 安全工具、智能编排引擎、角色化测试与预设安全测试角色、Skills 技能系统与专业测试技能，以及完整的测试生命周期管理能力。通过原生 MCP 协议与 AI 智能体，支持从对话指令到漏洞发现、攻击链分析、知识检索与结果可视化的全流程自动化，为安全团队提供可审计、可追溯、可协作的专业测试环境。
+## 双模式安全平台
 
+CyberStrikeAI 是一款 **AI 原生安全测试平台**，基于 Go 构建。同时提供 **SecOps AI** 安全运营协作平台，集成攻击测试与防御运营能力。
 
-## 界面与集成预览
+### CyberStrikeAI - 攻击测试
+- 100+ 渗透测试工具
+- AI 驱动的漏洞发现
+- 攻击链可视化
+- MCP 协议集成
+
+### SecOps AI - 安全运营
+- 多源数据采集
+- AI 智能事件分析
+- 态势感知仪表盘
+- 团队协作处置
+
+---
+
+## SecOps AI 安全运营协作平台
+
+SecOps AI 是基于 CyberStrikeAI 二次开发的安全运营协作平台，将攻击性安全测试能力扩展为覆盖安全事件调查、研判、处置的全面安全运营能力。
+
+### 核心功能
+
+#### 数据采集
+- 日志文件导入 (Syslog/JSON/CSV)
+- SIEM 告警解析 (Splunk/Elastic/Sentinel)
+- 威胁情报采集 (STIX/TAXII)
+- API 定时采集
+- Webhook 实时接收
+
+#### 事件管理
+- 事件分类 (误报/确认/待确认)
+- 状态流转 (创建→处理中→已处置→关闭)
+- 关联分析 (IoC/资产/攻击链)
+- 响应处置 (隔离/封禁/禁用用户)
+
+#### AI 分析
+- 事件智能分析
+- 威胁研判
+- 智能建议
+- 报告生成
+- 知识问答
+
+#### 态势感知
+- 安全态势仪表盘
+- 攻击趋势分析
+- 资产态势
+- 响应效能统计
+- 威胁情报展示
+
+#### 团队协作
+- 工单流转
+- 审核审批
+- 通知集成 (钉钉/飞书/Webhook)
+
+---
+
+## 快速开始
+
+```bash
+git clone https://github.com/lantcanwu/aisop.git
+cd aisop
+chmod +x run.sh && ./run.sh
+```
+
+访问 http://localhost:8080 配置使用。
+
+---
+
+## 界面预览
 
 <div align="center">
 

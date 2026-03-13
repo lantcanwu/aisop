@@ -2,15 +2,81 @@
   <img src="web/static/logo.png" alt="CyberStrikeAI Logo" width="200">
 </div>
 
-# CyberStrikeAI
-
+# CyberStrikeAI + SecOps AI
 
 [中文](README_CN.md) | [English](README.md)
 
-CyberStrikeAI is an **AI-native security testing platform** built in Go. It integrates 100+ security tools, an intelligent orchestration engine, role-based testing with predefined security roles, a skills system with specialized testing skills, and comprehensive lifecycle management capabilities. Through native MCP protocol and AI agents, it enables end-to-end automation from conversational commands to vulnerability discovery, attack-chain analysis, knowledge retrieval, and result visualization—delivering an auditable, traceable, and collaborative testing environment for security teams.
+## Dual-Mode Security Platform
 
+CyberStrikeAI is an **AI-native security testing platform** built in Go. Also provides **SecOps AI** - a security operations collaboration platform integrating offensive testing and defensive operations capabilities.
 
-## Interface & Integration Preview
+### CyberStrikeAI - Offensive Testing
+- 100+ penetration testing tools
+- AI-driven vulnerability discovery
+- Attack chain visualization
+- MCP protocol integration
+
+### SecOps AI - Security Operations
+- Multi-source data collection
+- AI-powered event analysis
+- Situational awareness dashboard
+- Team collaboration & response
+
+---
+
+## SecOps AI Platform
+
+SecOps AI is a security operations collaboration platform based on CyberStrikeAI, extending offensive testing capabilities to comprehensive security operations covering event investigation, analysis, and response.
+
+### Core Features
+
+#### Data Collection
+- Log file import (Syslog/JSON/CSV)
+- SIEM alert parsing (Splunk/Elastic/Sentinel)
+- Threat intelligence collection (STIX/TAXII)
+- API scheduled collection
+- Webhook real-time receiving
+
+#### Event Management
+- Event classification (false positive/confirmed/pending)
+- Status workflow (created→in_progress→resolved→closed)
+- Correlation analysis (IoC/asset/attack chain)
+- Response actions (isolate/block/disable)
+
+#### AI Analysis
+- Intelligent event analysis
+- Threat judgment
+- Smart suggestions
+- Report generation
+- Knowledge Q&A
+
+#### Situational Awareness
+- Security dashboard
+- Attack trend analysis
+- Asset posture
+- Response efficiency metrics
+- Threat intelligence display
+
+#### Team Collaboration
+- Ticket workflow
+- Approval & review
+- Notifications (DingTalk/Lark/Webhook)
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/lantcanwu/aisop.git
+cd aisop
+chmod +x run.sh && ./run.sh
+```
+
+Access http://localhost:8080 to configure and use.
+
+---
+
+## Interface Preview
 
 <div align="center">
 
