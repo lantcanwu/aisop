@@ -19,7 +19,7 @@ server:
 
 # 认证配置
 auth:
-  password:  # Web 登录密码，请修改为强密码
+  password: f9seDl1h9F1EYiTjMQU3GlG0 # Web 登录密码，请修改为强密码
   session_duration_hours: 12          # 登录有效期（小时），超时后需重新登录
 
 # 日志配置
